@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Emma</title>
+    </head>
+    <body>
+        <button id="add-column">添加列</button>
+        <button id="gen-sql">生成SQL</button>
+        <div id="error"></div>
+        <div><label for="db">库名</label><input type="text" id="db"/></div>
+        <div><label for="table">表名</label><input type="text" id="table"/></div>
+        <div><label for="table-comment">表注释</label><input type="text" id="table-comment"/></div>
+        <div id="columns">
+            <datalist id="col-type">
+                <option>int</option>
+                <option>float</option>
+                <option>varchar</option>
+                <option>date</option>
+            </datalist>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script>
+            $("#add-column").click(function(){
+                let col = document.createElement("div");
+                col.className = "col";
+                children = "<lable style='display:inline-block' for='name'>列名</lable><input style='display:inline-block' type='text' class='name'/>";
+                children = children + "<lable style='display:inline-block' for='type'>类型</lable><select style='display:inline-block' type='text' list='col-type' class='type'>";
+                children = children + "<option value='int'>int</option>";
+                children = children + "<option value='varchar'>varchar</option>";
+                children = children + "<option value='float'>float</option>";
+                children = children + "<option value='date'>date</option>";
+                children = children + "</select>";
+                children = children + "<div class='varchar' style='display:none;'><lable style='display:inline-block;' for='varchar-len'>长度</lable><input style='display:inline-block;' type='text' class='varchar-len'/></div>";
+                children = children + "<lable style='display:inline-block' for='primary'>是否为主键（所有被选为主键的字段组合后可以确定唯一一条数据）</lable><input style='display:inline-block' type='checkbox' class='primary'/>";
+                children = children + "<lable style='display:inline-block' for='nullable'>是否可为空</lable><input style='display:inline-block' type='checkbox' class='nullable'/>";
+                children = children + "<lable style='display:inline-block' for='default'>默认值</lable><input style='display:inline-block' type='text' class='default'/>";
+                children = children + "<lable style='display:inline-block' for='comment'>注释</lable><input style='display:inline-block' type='text' class='comment'/>";
+                col.innerHTML = children;
+                let type = $(col.querySelector(".type"));
+                let varchar = $(col.querySelector(".varchar"));                
+                type.on("change", function() {
+                    if ($(this).val()=="varchar") {
+                        varchar.css("display", "inline-block");
+                    } else {
+                        varchar.css("display", "none");
+                    }
+                })
+                $("#columns").append(col)
+            });
+            $("#gen-sql").click(function() {
+                let cols = [];
+                $(".col").each(function(i, elem) {
+                    let col = {
+                        name: $(this).find(".name").val(),
+                        type: $(this).find(".type").val(),
+                        varchar_len: $(this).find(".varchar-len").val(),
+                        primary: $(this).find(".primary").prop("checked"),
+                        nullable: $(this).find(".nullable").prop("checked"),
+                        default: $(this).find(".default").val(),
+                        comment: $(this).find(".comment").val(),
+                    }
+                    cols.push(col)
+                });
+                let db = $("#db").val();
+                let table = $("#table").val();
+                let comment = $("#table-comment").val();
+                let schema = {
+                    db: db,
+                    table: table,
+                    comment: comment,
+                    cols: cols,
+                }
+                $.ajax({
+                    url: "mysql/sql",
+                    type: "get",
+                    data: { "schema": JSON.stringify(schema) },
+                    success: function(ret) {
+                        let ret_info = JSON.parse(ret);
+                        if (ret_info.hasOwnProperty("error")) {
+                            $("#error").html("<p style='color:red'>"+ret_info.error+"</p>");
+                            return;
+                        }
+                        $("#error").html("");
+                        let element = document.createElement("a");
+                        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(ret_info.sql));
+                        let filename = db+"_"+table+".sql";
+                        element.setAttribute("download", filename);
+                        element.style.display = "none";
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                    },
+                });
+            });
+        </script>
+    </body>
+</html>
