@@ -40,22 +40,28 @@ def mysql_sql():
         primary = col["primary"]
         nullable = col["nullable"]
         default = col["default"]
-        if type == "varchar":
-            default = f"'{default}'"
-        elif type == "int":
-            try:
-                default = int(default)
-            except:
-                return json.dumps({"error": f"列{name}的类型为int，默认值应该是个int"})
-        elif type == "float":
-            try:
-                default = float(default)
-            except:
-                return json.dumps({"error": f"列{name}的类型为float，默认值应该是个float"})
-        elif type == "date":
-            default = f"'{default}'"
+        default_null = col["default_null"]
+        if not nullable and default_null:
+            return json.dumps({"error": f"列{name}的不可为空，默认值不应该为空"})
+        if default_null:
+            default = "NULL"
         else:
-            return json.dumps({"error": f"列{name}未知类型{type}"})
+            if type == "varchar":
+                default = f"'{default}'"
+            elif type == "int":
+                try:
+                    default = int(default)
+                except:
+                    return json.dumps({"error": f"列{name}的类型为int，默认值应该是个int"})
+            elif type == "float":
+                try:
+                    default = float(default)
+                except:
+                    return json.dumps({"error": f"列{name}的类型为float，默认值应该是个float"})
+            elif type == "date":
+                default = f"'{default}'"
+            else:
+                return json.dumps({"error": f"列{name}未知类型{type}"})
         comment = col["comment"]
         if comment == "":
             return json.dumps({"error": f"列{name}的注释不可为空"})

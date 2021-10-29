@@ -33,11 +33,13 @@
                 children = children + "<div class='varchar' style='display:none;'><lable style='display:inline-block;' for='varchar-len'>长度</lable><input style='display:inline-block;' type='text' class='varchar-len'/></div>";
                 children = children + "<lable style='display:inline-block' for='primary'>是否为主键（所有被选为主键的字段组合后可以确定唯一一条数据）</lable><input style='display:inline-block' type='checkbox' class='primary'/>";
                 children = children + "<lable style='display:inline-block' for='nullable'>是否可为空</lable><input style='display:inline-block' type='checkbox' class='nullable'/>";
+                children = children + "<lable style='display:inline-block' for='default_null'>默认值为空</lable><input style='display:inline-block' type='checkbox' class='default_null'/>";
                 children = children + "<lable style='display:inline-block' for='default'>默认值</lable><input style='display:inline-block' type='text' class='default'/>";
                 children = children + "<lable style='display:inline-block' for='comment'>注释</lable><input style='display:inline-block' type='text' class='comment'/>";
+                children = children + "<button class='del'>删除列</button>";
                 col.innerHTML = children;
                 let type = $(col.querySelector(".type"));
-                let varchar = $(col.querySelector(".varchar"));                
+                let varchar = $(col.querySelector(".varchar"));
                 type.on("change", function() {
                     if ($(this).val()=="varchar") {
                         varchar.css("display", "inline-block");
@@ -45,7 +47,11 @@
                         varchar.css("display", "none");
                     }
                 })
-                $("#columns").append(col)
+                let del = $(col.querySelector(".del"));
+                $("#columns").append(col);
+                del.click(function() {
+                    col.remove();
+                });
             });
             $("#gen-sql").click(function() {
                 let cols = [];
@@ -56,10 +62,11 @@
                         varchar_len: $(this).find(".varchar-len").val(),
                         primary: $(this).find(".primary").prop("checked"),
                         nullable: $(this).find(".nullable").prop("checked"),
+                        default_null: $(this).find(".default_null").prop("checked"),
                         default: $(this).find(".default").val(),
                         comment: $(this).find(".comment").val(),
                     }
-                    cols.push(col)
+                    cols.push(col);
                 });
                 let db = $("#db").val();
                 let table = $("#table").val();
